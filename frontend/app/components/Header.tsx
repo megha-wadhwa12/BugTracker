@@ -34,9 +34,6 @@ export default function Header() {
           >
             + New Bug
           </Link>
-          <div className="w-10 h-10 bg-linear-to-br from-violet-500 to-violet-600 rounded-full flex items-center justify-center text-white font-semibold text-sm cursor-pointer hover:shadow-md transition-shadow">
-            JD
-          </div>
         </div>
       </div>
     </header>
