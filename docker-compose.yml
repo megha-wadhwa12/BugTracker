@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    container_name: bugtracker_backend
+    ports:
+      - "7001:7001"
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      PORT: 7001
+
+  frontend:
+    build: ./frontend
+    container_name: bugtracker_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://backend:7001"
+    depends_on:
+      - backend
