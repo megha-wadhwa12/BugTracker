@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const {authMiddleware} = require("./../middleware/authMiddleware");
 const Bug = require("../models/Bug");
 
 const {
@@ -9,14 +10,14 @@ const {
   deleteBug,
 } = require("./../controllers/bugController");
 
-router.post("/", createBug);
+router.post("/", authMiddleware, createBug);
 
-router.get("/", getBugs);
+router.get("/", authMiddleware, getBugs);
 
-router.get("/:id", getBugById);
+router.get("/:id", authMiddleware, getBugById);
 
-router.patch("/:id", updateBug);
+router.patch("/:id", authMiddleware, updateBug);
 
-router.delete("/:id", deleteBug);
+router.delete("/:id", authMiddleware, deleteBug);
 
 module.exports = router;
