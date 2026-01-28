@@ -16,5 +16,6 @@ app.get("/", (req, res) => {
 
 app.use("/bugs", require("./routes/bugRoutes"));
 app.use("/auth", require("./routes/authRoutes"));
+app.use("/projects", require("./routes/projectRoutes"));
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
