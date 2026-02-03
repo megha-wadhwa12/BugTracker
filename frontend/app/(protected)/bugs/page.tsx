@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import BugTable from "../components/bugTable";
-import FilterPanel from "../components/FilterPanel";
+import BugTable from "../../../components/bugTable";
+import FilterPanel from "../../../components/FilterPanel";
 
 interface Bug {
   _id: string;

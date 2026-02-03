@@ -1,2 +1,138 @@
-﻿@import 'tailwindcss';
+﻿@import "tailwindcss";
 
+/* =======================
+   THEME TOKENS (v4)
+======================= */
+:root {
+  --bg-main: #091714;
+  --bg-sidebar: #050b08;
+  --bg-card: #0a1310;
+  --bg-card-hover: #0f1f18;
+  --bg-input: #000101;
+
+  --bg-gradient-start: #11221e;
+  --bg-gradient-end: #020403;
+
+  --border-default: #13261d;
+  --border-soft: #0f1f18;
+
+  --text-primary: #e6f4ef;
+  --text-secondary: #9fb7ad;
+  --text-tertiary: #6b857a;
+  --text-disabled: #3f544c;
+  --text-muted: #87908c;
+
+  --primary: #00e599;
+  --primary-hover: #00c482;
+  --primary-soft: rgba(0, 229, 153, 0.12);
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #38bdf8;
+}
+
+/* =======================
+   SEMANTIC UTILITIES
+======================= */
+@layer utilities {
+  /* ---- BACKGROUNDS ---- */
+  .bg-main {
+    background-color: var(--bg-main);
+  }
+  .bg-sidebar {
+    background-color: var(--bg-sidebar);
+  }
+  .bg-card {
+    background-color: var(--bg-card);
+  }
+  .bg-card-hover:hover {
+    background-color: var(--bg-card-hover);
+  }
+
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .bg-primary-hover:hover {
+    background-color: var(--primary-hover);
+  }
+  .bg-primary-soft {
+    background-color: var(--primary-soft);
+  }
+
+  .bg-success {
+    background-color: var(--success);
+  }
+  .bg-warning {
+    background-color: var(--warning);
+  }
+  .bg-danger {
+    background-color: var(--danger);
+  }
+  .bg-info {
+    background-color: var(--info);
+  }
+  .bg-input {
+    background-color: var(--bg-input);
+  }
+  .bg-border-soft {
+  background-color: var(--border-soft);
+}
+
+
+  /* ---- TEXT COLORS ---- */
+  .text-primary {
+    color: var(--text-primary);
+  }
+  .text-secondary {
+    color: var(--text-secondary);
+  }
+  .text-tertiary {
+    color: var(--text-tertiary);
+  }
+  .text-disabled {
+    color: var(--text-disabled);
+  }
+  .text-muted {
+    color: var(--text-muted);
+  }
+  .text-green {
+    color: var(--primary);
+  }
+
+  .text-success {
+    color: var(--success);
+  }
+  .text-warning {
+    color: var(--warning);
+  }
+  .text-danger {
+    color: var(--danger);
+  }
+  .text-info {
+    color: var(--info);
+  }
+
+  /* ---- BORDERS ---- */
+  .border-default {
+    border-color: var(--border-default);
+  }
+  .border-soft {
+    border-color: var(--border-soft);
+  }
+
+  /* ---- RINGS / FOCUS ---- */
+  .ring-primary {
+    --tw-ring-color: var(--primary);
+  }
+
+  /* ---- GRADIENTS ---- */
+
+  .bg-main-gradient {
+    background-image: linear-gradient(
+      to bottom,
+      var(--bg-gradient-start),
+      var(--bg-gradient-end)
+    );
+  }
+}

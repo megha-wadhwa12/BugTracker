@@ -1,4 +1,4 @@
-import BugDetailClient from "./../../components/BugDetailClient";
+import BugDetailClient from "../../../../components/BugDetailClient";
 
 export default async function BugDetailPage({
   params,
