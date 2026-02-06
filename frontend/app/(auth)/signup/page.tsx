@@ -1,53 +1,70 @@
 'use client'
 
+import { signupAPI } from '@/services/auth';
+import { useAuthStore } from '@/store/authStore';
 import { Bug } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FaGithub } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { loginAPI } from '@/services/auth';
-import { useAuthStore } from '@/store/authStore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LoginFormValues, loginSchema } from '@/lib/validators/auth';
+import { signupFormValues, signupSchema } from '@/lib/validators/auth';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+export default function SignupPage() {
     const router = useRouter();
-    const { login } = useAuthStore();
+    const login = useAuthStore((s) => s.login);
 
     const { register, handleSubmit, formState: {
         errors, isSubmitting
-    } } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema)
+    } } = useForm<signupFormValues>({
+        resolver: zodResolver(signupSchema)
     });
 
-    const onSubmit = async (values: LoginFormValues) => {
+    const onSubmit = async (values: signupFormValues) => {
         try {
-            const data = await loginAPI(values);
+            const data = await signupAPI(values);
             login(data.token, data.user);
-            toast.success("Welcome back 👋");
+            toast.success("Account created successfully 🎉");
             router.push('/dashboard');
         } catch (error) {
-            toast.error("Invalid email or password");
+            toast.error("Email already exists or invalid data");
         }
     }
 
     return (
         <div className="min-h-screen min-w-screen bg-main-gradient flex items-center justify-center text-white select-none flex-col px-4">
-            <div className="flex flex-col items-center text-center mb-6">
+            <div className="flex flex-col min-w-screen items-center text-center mb-6">
                 <div className='h-10 w-10 rounded-full bg-primary-soft flex items-center justify-center mb-3'>
                     <span className='text-primary text-lg'><Bug /></span>
                 </div>
 
-                <h1 className='text-xl font-semibold text-primary'>Welcome back to BugTrack Pro</h1>
+                <h1 className='text-xl font-semibold text-primary'>Join BugTrack Pro today</h1>
                 <p className="text-sm text-muted mt-1">
-                    Sign in to continue managing your projects and issues.
+                    Start managing your projects and issues with the most advanced bug tracking tool.
                 </p>
             </div>
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 className='w-full max-w-md rounded-2xl p-8 bg-card text-muted backdrop-blur-xl border border-default shadow-xl'>
                 <div className='space-y-4'>
+                    <div>
+                        <label htmlFor='name' className='block text-xs font-medium text-secondary mb-1'>Full Name</label>
+                        <input
+                            type="text"
+                            className='w-full h-11 rounded-lg px-3 text-sm bg-input border border-default text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-primary'
+                            autoComplete='false'
+                            placeholder='Jane Doe'
+                            autoCorrect='off'
+                            autoCapitalize='true'
+                            {...register('name')}
+                        />
+                        {errors.name && (
+                            <p className="text-xs text-danger mt-1">
+                                {errors.name.message}
+                            </p>
+                        )}
+                    </div>
                     <div>
                         <label htmlFor="email" className='block text-xs font-medium text-secondary mb-1'>Email address</label>
                         <input type="email"
@@ -56,7 +73,6 @@ export default function LoginPage() {
                             className='w-full h-11 rounded-lg px-3 text-sm bg-input border border-default text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-primary'
                             autoCapitalize='false'
                             autoCorrect='off'
-                            // onChange={(e) => { setEmail(e.target.value) }}
                             {...register('email')}
                         />
                         {errors.email && (
@@ -67,42 +83,34 @@ export default function LoginPage() {
                     </div>
 
                     <div>
-                        <div>
-                            <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-medium text-secondary mb-1">
-                                    Password
-                                </label>
-                                <button className="block text-xs font-medium text-green hover:underline mb-1">
-                                    Forgot password?
-                                </button>
-                            </div>
-
-                            <div>
-                                <input type="password" placeholder='••••••••'
-                                    className='w-full h-11 rounded-lg px-3 text-sm bg-input border border-default text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-primary'
-                                    autoComplete='false'
-                                    autoCapitalize='none'
-                                    autoCorrect='off'
-                                    // onChange={(e) => { setPassword(e.target.value) }}
-                                    {...register('password')}
-                                />
-                            </div>
-                            {errors.password && (
-                                <p className="text-xs text-danger mt-1">
-                                    {errors.password.message}
-                                </p>
-                            )}
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-medium text-secondary mb-1">
+                                Password
+                            </label>
                         </div>
 
+                        <div>
+                            <input type="password" placeholder='••••••••'
+                                className='w-full h-11 rounded-lg px-3 text-sm bg-input border border-default text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-primary'
+                                autoComplete='false'
+                                autoCapitalize='none'
+                                autoCorrect='off'
+                                {...register('password')}
+                            />
+                        </div>
+                        {errors.password && (
+                            <p className="text-xs text-danger mt-1">
+                                {errors.password.message}
+                            </p>
+                        )}
                     </div>
 
                     <button
                         className='mt-6 w-full h-11 rounded-lg bg-primary hover:bg-primary-hover text-black font-medium transition text-sm'
-                        // onClick={handleLogin}
                         type="submit"
                         disabled={isSubmitting}
                     >
-                        {isSubmitting ? "Signing in..." : "Log in to BugTrack Pro →"}
+                        {isSubmitting ? "Creating account..." : "Create account →"}
                     </button>
 
                     <div className="flex items-center gap-3 my-4">
@@ -136,9 +144,9 @@ export default function LoginPage() {
                     </div>
 
                     <p className="text-center text-sm text-tertiary mt-6">
-                        New to BugTrack?{" "}
-                        <a className="text-green font-medium hover:underline" onClick={() => router.push('/signup')}>
-                            Create an account
+                        Already have an account?{" "}
+                        <a className="text-green font-medium hover:underline" onClick={() => router.push('/login')}>
+                            Log in
                         </a>
                     </p>
                 </div>
