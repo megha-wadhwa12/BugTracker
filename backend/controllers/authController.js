@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const { signToken } = require("./../utils/jwt");
 
@@ -23,37 +24,36 @@ const signUpUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.log("error: ", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  
+
   try {
     if (!email || !password) {
       return res
-      .status(400)
-      .json({ message: "Email and password are required" });
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
-    
+
     const user = await User.findOne({ email }).select("+password");
-    
+
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    
+
     user.lastLoginAt = new Date();
-    await user.save({ validateBeforeSave: false})
+    await user.save({ validateBeforeSave: false });
 
     const token = signToken(user._id);
-    
+
     res.status(200).json({
       token,
       user,
@@ -63,7 +63,28 @@ const loginUser = async (req, res) => {
   }
 };
 
+const userProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   signUpUser,
   loginUser,
+  userProfile,
 };

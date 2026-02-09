@@ -26,7 +26,7 @@ export default function LoginPage() {
             const data = await loginAPI(values);
             login(data.token, data.user);
             toast.success("Welcome back 👋");
-            router.push('/dashboard');
+            router.push('/projects');
         } catch (error) {
             toast.error("Invalid email or password");
         }
