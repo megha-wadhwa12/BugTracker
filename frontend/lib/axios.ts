@@ -24,6 +24,8 @@ api.interceptors.response.use(
   }
 );
 
+export default api;
+
 /// USAGE
 // import api from "@/lib/axios";
 

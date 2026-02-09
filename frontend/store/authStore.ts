@@ -1,3 +1,4 @@
+import { userProfileAPI } from "@/services/auth";
 import { create } from "zustand";
 
 export interface User {
@@ -50,7 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  initAuth: () => {
+  initAuth: async () => {
     if (typeof window === "undefined") return;
 
     const token = localStorage.getItem("token");
@@ -65,10 +66,24 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
 
-    set({
-      token,
-      isAuthenticated: true,
-      loading: false,
-    });
+    try {
+      set({ loading: true });
+      const user = await userProfileAPI();
+      set({
+        token,
+        user,
+        isAuthenticated: true,
+        loading: false
+      })
+
+    } catch (error) {
+      localStorage.removeItem("token");
+      set({
+        token: null,
+        user: null,
+        isAuthenticated: false,
+        loading: false,
+      });
+    }
   },
 }));

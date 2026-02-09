@@ -1,29 +1,38 @@
 interface PriorityBadgeProps {
-  priority: "low" | "medium" | "high";
+  priority?: "low" | "medium" | "high";
 }
 
 export default function PriorityBadge({ priority }: PriorityBadgeProps) {
-  const priorityConfig = {
+  const PRIORITY_CONFIG = {
     high: {
-      bg: "bg-red-100",
-      text: "text-red-700",
+      bg: "bg-danger/10",
+      text: "text-danger",
+      label: "High",
     },
     medium: {
-      bg: "bg-amber-100",
-      text: "text-amber-700",
+      bg: "bg-warning/10",
+      text: "text-warning",
+      label: "Medium",
     },
     low: {
-      bg: "bg-emerald-100",
-      text: "text-emerald-700",
+      bg: "bg-success/10",
+      text: "text-success",
+      label: "Low",
     },
   };
 
-  const config = priorityConfig[priority];
-  const label = priority.charAt(0).toUpperCase() + priority.slice(1);
+  const config =
+    PRIORITY_CONFIG[priority as keyof typeof PRIORITY_CONFIG] ?? {
+      bg: "bg-card",
+      text: "text-tertiary",
+      label: priority ?? "Unknown",
+    };
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}>
-      {label}
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}
+    >
+      {config.label}
     </span>
   );
 }

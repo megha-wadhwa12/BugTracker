@@ -9,7 +9,7 @@ export default function HomePage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      router.replace("/dashboard");
+      router.replace("/projects");
     } else {
       router.replace("/login");
     }

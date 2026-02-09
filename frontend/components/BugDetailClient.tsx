@@ -30,7 +30,6 @@ export default function BugDetailClient({ id }: { id: string }) {
     setLoading(true);
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/bugs/${id}`);
-      console.log("Loaded bug:", res.data);
       setBug(res.data);
       setEdit({
         title: res.data.title ?? "",

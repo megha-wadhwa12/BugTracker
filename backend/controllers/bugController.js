@@ -1,17 +1,23 @@
+const mongoose = require("mongoose");
 const Bug = require("../models/Bug");
 
 // CREATE BUG
 const createBug = async (req, res) => {
   try {
+    const projectId = req.body.projectId;
+
+    if (!mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ message: "Invalid project id" });
+    }
+
     const bug = await Bug.create({
       title: req.body.title,
       description: req.body.description || "",
       priority: req.body.priority || "medium",
       status: req.body.status || "open",
       assignedTo: req.body.assignedTo || "",
-      activity: [
-        { message: "Bug created", timestamp: new Date() }
-      ]
+      project: projectId,
+      activity: [{ message: "Bug created", timestamp: new Date() }],
     });
 
     res.status(201).json(bug);
@@ -23,9 +29,14 @@ const createBug = async (req, res) => {
 // GET ALL BUGS + FILTERS
 const getBugs = async (req, res) => {
   try {
-    const { status, priority } = req.query;
+    const { status, priority, projectId } = req.query;
     const query = {};
 
+    if (projectId && !mongoose.Types.ObjectId.isValid(projectId)) {
+      return res.status(400).json({ message: "Invalid project id" });
+    }
+
+    if (projectId) query.project = projectId;
     if (status) query.status = status;
     if (priority) query.priority = priority;
 
@@ -48,13 +59,25 @@ const getBugById = async (req, res) => {
   }
 };
 
-// UPDATE BUG (Best Version)
+// UPDATE BUG
 const updateBug = async (req, res) => {
   try {
     const prev = await Bug.findById(req.params.id);
     if (!prev) return res.status(404).json({ message: "Bug not found" });
 
     const changes = [];
+
+    if ("project" in req.body) {
+      return res
+        .status(400)
+        .json({ message: "Bug cannot be moved to another project" });
+    }
+
+    if ("activity" in req.body) {
+      return res
+        .status(400)
+        .json({ message: "Activity cannot be modified directly" });
+    }
 
     // STATUS CHANGE
     if ("status" in req.body && req.body.status !== prev.status) {
@@ -70,7 +93,9 @@ const updateBug = async (req, res) => {
 
     // PRIORITY CHANGE
     if ("priority" in req.body && req.body.priority !== prev.priority) {
-      changes.push(`Priority changed from ${prev.priority} → ${req.body.priority}`);
+      changes.push(
+        `Priority changed from ${prev.priority} → ${req.body.priority}`,
+      );
     }
 
     // TITLE CHANGE
@@ -79,16 +104,17 @@ const updateBug = async (req, res) => {
     }
 
     // DESCRIPTION CHANGE
-    if ("description" in req.body && req.body.description !== prev.description) {
+    if (
+      "description" in req.body &&
+      req.body.description !== prev.description
+    ) {
       changes.push("Description updated");
     }
 
     // Update bug after computing changes
-    const updated = await Bug.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updated = await Bug.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     if (!updated) return res.status(404).json({ message: "Bug not found" });
 
@@ -96,7 +122,7 @@ const updateBug = async (req, res) => {
     if (changes.length > 0) {
       const entries = changes.map((msg) => ({
         message: msg,
-        timestamp: new Date()
+        timestamp: new Date(),
       }));
 
       updated.activity = [...(updated.activity || []), ...entries];

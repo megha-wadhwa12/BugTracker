@@ -1,29 +1,38 @@
 interface StatusBadgeProps {
-  status: "open" | "in-progress" | "done";
+  status?: "open" | "in-progress" | "done";
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
-  const statusConfig = {
+  const STATUS_CONFIG = {
     open: {
-      bg: "bg-violet-100",
-      text: "text-violet-700",
+      bg: "bg-info/10",
+      text: "text-info",
+      label: "Open",
     },
     "in-progress": {
-      bg: "bg-amber-100",
-      text: "text-amber-700",
+      bg: "bg-warning/10",
+      text: "text-warning",
+      label: "In Progress",
     },
     done: {
-      bg: "bg-emerald-100",
-      text: "text-emerald-700",
+      bg: "bg-success/10",
+      text: "text-success",
+      label: "Done",
     },
   };
 
-  const config = statusConfig[status];
-  const label = status === "in-progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1);
+  const config =
+    STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] ?? {
+      bg: "bg-card",
+      text: "text-tertiary",
+      label: status ?? "Unknown",
+    };
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}>
-      {label}
+    <span
+      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.text}`}
+    >
+      {config.label}
     </span>
   );
 }
