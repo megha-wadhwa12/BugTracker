@@ -26,7 +26,7 @@ export default function SignupPage() {
             const data = await signupAPI(values);
             login(data.token, data.user);
             toast.success("Account created successfully 🎉");
-            router.push('/dashboard');
+            router.push('/projects');
         } catch (error) {
             toast.error("Email already exists or invalid data");
         }
