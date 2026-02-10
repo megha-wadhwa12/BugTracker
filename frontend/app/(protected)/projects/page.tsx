@@ -377,8 +377,6 @@ export default function ProjectsPage() {
     }
   })
 
-
-
   useEffect(() => {
     loadProjects()
   }, [])

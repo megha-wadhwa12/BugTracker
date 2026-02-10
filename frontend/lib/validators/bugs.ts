@@ -6,8 +6,6 @@ export const bugsFormSchema = z.object({
     priority: z.string(),
     status: z.string(),
     assignedTo: z.string(),
-    projectId: z.string(),
-    activity: z.array(z.string()).optional()
 })
 
 export type BugFormValues = z.infer<typeof bugsFormSchema>;

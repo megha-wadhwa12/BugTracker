@@ -5,6 +5,12 @@ export const getProjects = async () => {
   return response.data;
 }
 
+export const getProjectById = async (projectId: string) => {
+  const response = await api.get(`/projects/${projectId}`);
+  return response.data;
+};
+
+
 export const createProject = async (data: { name: string; description?: string; members?: string[] }) => {
   const response = await api.post("/projects", data);
   return response.data;

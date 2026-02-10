@@ -4,14 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Bug, Search, Upload, Grid, List, MoreVertical, ChevronDown, Plus, Calendar, Bell, MessageCircle, User } from 'lucide-react'
-import api from '@/lib/axios'
 import toast from 'react-hot-toast'
-import CreateBug from '@/app/create/page'
-import { createBug } from '@/services/bugs'
+import { createBug, getBugs } from '@/services/bugs'
 import { BugFormValues, bugsFormSchema } from '@/lib/validators/bugs'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import Modal from '@/components/Modal'
+import { getProjectById } from '@/services/projects'
 
 interface BugItem {
   _id: string
@@ -22,7 +21,7 @@ interface BugItem {
   assignedTo?: string
   createdAt: string
   updatedAt: string
-  projectId?: string
+  project?: string
 }
 
 interface ProjectDetail {
@@ -85,7 +84,6 @@ export default function ProjectBugsPage() {
       priority: 'medium',
       status: 'open',
       assignedTo: 'UNASSIGNED',
-      projectId: '',
     }
   })
 
@@ -102,31 +100,34 @@ export default function ProjectBugsPage() {
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
-  useEffect(() => {
+  const loadProjectAndBugs = async () => {
     if (!projectId) return;
 
-    const load = async () => {
-      try {
-        setLoading(true)
-        const [projectRes, bugsRes] = await Promise.all([
-          api.get(`/projects/${projectId}`),
-          api.get('/bugs', {
-            params: { projectId, status: statusFilter !== 'all' ? statusFilter : undefined, priority: priorityFilter !== 'all' ? priorityFilter : undefined },
-          }),
-        ])
+    try {
+      setLoading(true);
 
-        setProject(projectRes.data)
-        setBugs(bugsRes.data || [])
-      } catch (err: any) {
-        console.error('Failed to load bugs:', err)
-        toast.error(err.response?.data?.error || 'Failed to load bugs')
-      } finally {
-        setLoading(false)
-      }
+      const [projectData, bugsData] = await Promise.all([
+        getProjectById(projectId),
+        getBugs({
+          projectId,
+          status: statusFilter !== "all" ? statusFilter : undefined,
+          priority: priorityFilter !== "all" ? priorityFilter : undefined,
+        }),
+      ]);
+
+      setProject(projectData);
+      setBugs(bugsData || []);
+    } catch (err: any) {
+      console.error("Failed to load bugs:", err);
+      toast.error(err.response?.data?.error || "Failed to load bugs");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    load()
-  }, [projectId, statusFilter, priorityFilter])
+  useEffect(() => {
+    loadProjectAndBugs();
+  }, [projectId, statusFilter, priorityFilter]);
 
   const filteredBugs = useMemo(() => {
     let filtered = bugs
@@ -167,7 +168,17 @@ export default function ProjectBugsPage() {
 
   const handleCreateBug = async (data: BugFormValues) => {
     try {
-      await createBug(data);
+      const payload = {
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        status: data.status,
+        assignedTo: data.assignedTo,
+        project: projectId,
+      };
+
+      await createBug(payload);
+      await loadProjectAndBugs();
       toast.success('Bug created successfully')
       setCreateModalOpen(false)
       resetCreate()
@@ -525,7 +536,6 @@ export default function ProjectBugsPage() {
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
-                <option value="critical">Critical</option>
               </select>
             </div>
 
@@ -609,7 +619,7 @@ export default function ProjectBugsPage() {
             <button
               type="submit"
               disabled={isSubmittingCreate}
-              className="rounded-lg bg-[#27e0a6] px-5 py-2 font-medium text-black hover:bg-[#1fcf98] disabled:opacity-50"
+              className="rounded-lg bg-[#27e0a6] px-5 py-2 font-medium cursor-pointer text-black hover:bg-[#1fcf98] disabled:opacity-50"
             >
               {isSubmittingCreate ? 'Creating...' : 'Create Issue'}
             </button>
