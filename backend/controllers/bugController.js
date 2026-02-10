@@ -4,7 +4,7 @@ const Bug = require("../models/Bug");
 // CREATE BUG
 const createBug = async (req, res) => {
   try {
-    const projectId = req.body.projectId;
+    const projectId = req.body.project;
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
       return res.status(400).json({ message: "Invalid project id" });
