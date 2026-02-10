@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bug, Clock3, Flame, Info, Users } from "lucide-react";
+import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/axios";
+import { createBug, getBugs } from "@/services/bugs";
+import { BugFormValues, bugsFormSchema } from "@/lib/validators/bugs";
+import Modal from "@/components/Modal";
 
 interface BugActivity {
   message: string;
@@ -47,61 +53,100 @@ function isToday(ts: string) {
 
 export default function ProjectDashboardPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params?.id as string;
+
+  const {
+    register: registerBug,
+    handleSubmit: handleSubmitCreate,
+    formState: { errors: errorsCreate, isSubmitting: isSubmittingCreate },
+    reset: resetCreate,
+  } = useForm<BugFormValues>({
+    resolver: zodResolver(bugsFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      priority: "medium",
+      status: "open",
+      assignedTo: "UNASSIGNED",
+    },
+  });
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [bugs, setBugs] = useState<BugItem[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  useEffect(() => {
+  const loadProjectAndBugs = async () => {
     if (!projectId) return;
 
-    const load = async () => {
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        const [projectRes, bugsRes] = await Promise.all([
-          api.get(`/projects/${projectId}`),
-          api.get(`/bugs`, {
-            params: { projectId},
-          }),
-        ]);
+      const [projectRes, bugsRes] = await Promise.all([
+        api.get(`/projects/${projectId}`),
+        api.get(`/bugs`, {
+          params: { projectId },
+        }),
+      ]);
 
-        setProject(projectRes.data);
+      setProject(projectRes.data);
 
-        const bugList: BugItem[] = bugsRes.data;
-        setBugs(bugList);
+      const bugList: BugItem[] = bugsRes.data;
+      setBugs(bugList);
 
-        const merged: ActivityItem[] = [];
-        bugList.forEach((bug) => {
-          if (bug.activity && bug.activity.length > 0) {
-            bug.activity.forEach((a) => {
-              merged.push({
-                message: a.message,
-                timestamp: a.timestamp,
-                bugId: bug._id,
-                bugTitle: bug.title,
-              });
+      const merged: ActivityItem[] = [];
+      bugList.forEach((bug) => {
+        if (bug.activity && bug.activity.length > 0) {
+          bug.activity.forEach((a) => {
+            merged.push({
+              message: a.message,
+              timestamp: a.timestamp,
+              bugId: bug._id,
+              bugTitle: bug.title,
             });
-          }
-        });
+          });
+        }
+      });
 
-        merged.sort(
-          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-        setActivity(merged.slice(0, 10));
-      } catch (err) {
-        console.error("Failed to load project dashboard:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      merged.sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      setActivity(merged.slice(0, 10));
+    } catch (err) {
+      console.error("Failed to load project dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    load();
-  }, [API_URL, projectId]);
+  const handleCreateBug = async (data: BugFormValues) => {
+    try {
+      const payload = {
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        status: data.status,
+        assignedTo: data.assignedTo,
+        project: projectId,
+      };
+
+      await createBug(payload);
+      toast.success("Bug created successfully");
+      setCreateModalOpen(false);
+      resetCreate();
+      router.push(`/projects/${projectId}/bugs`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to create bug");
+    }
+  };
+
+  useEffect(() => {
+    loadProjectAndBugs();
+  }, [projectId]);
 
   const metrics = useMemo(() => {
     const total = bugs.length;
@@ -203,13 +248,13 @@ export default function ProjectDashboardPage() {
               Last 30 days
             </button>
 
-            <Link
-              href="/create"
+            <button
+              onClick={() => setCreateModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-black text-sm font-medium"
             >
               <Bug className="w-4 h-4" />
               Create Bug
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -305,7 +350,7 @@ export default function ProjectDashboardPage() {
                     )}
                     <div
                       className="w-full rounded-t-md bg-primary transition-all"
-                      style={{ 
+                      style={{
                         height: count > 0 ? `${height}px` : '0%',
                         minHeight: count > 0 ? '8px' : '0px'
                       }}
@@ -335,9 +380,8 @@ export default function ProjectDashboardPage() {
               <div
                 className="relative w-28 h-28 rounded-full"
                 style={{
-                  backgroundImage: `conic-gradient(var(--primary) ${
-                    healthScore * 3.6
-                  }deg, var(--bg-card) 0deg)`,
+                  backgroundImage: `conic-gradient(var(--primary) ${healthScore * 3.6
+                    }deg, var(--bg-card) 0deg)`,
                 }}
               >
                 <div className="absolute inset-3 rounded-full bg-main flex flex-col items-center justify-center">
@@ -362,11 +406,10 @@ export default function ProjectDashboardPage() {
                     <div
                       className="h-full bg-success"
                       style={{
-                        width: `${
-                          metrics.total === 0
-                            ? 0
-                            : (metrics.done / metrics.total) * 100
-                        }%`,
+                        width: `${metrics.total === 0
+                          ? 0
+                          : (metrics.done / metrics.total) * 100
+                          }%`,
                       }}
                     />
                   </div>
@@ -381,11 +424,10 @@ export default function ProjectDashboardPage() {
                     <div
                       className="h-full bg-warning"
                       style={{
-                        width: `${
-                          metrics.total === 0
-                            ? 0
-                            : (metrics.open / metrics.total) * 100
-                        }%`,
+                        width: `${metrics.total === 0
+                          ? 0
+                          : (metrics.open / metrics.total) * 100
+                          }%`,
                       }}
                     />
                   </div>
@@ -470,7 +512,136 @@ export default function ProjectDashboardPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          resetCreate();
+        }}
+        title="Create New Bug"
+        size="lg"
+      >
+        <form
+          onSubmit={handleSubmitCreate(handleCreateBug)}
+          className="space-y-5 scroll-auto rounded-xl bg-[#0b1412] border border-[#1f2a27] p-6 text-sm"
+        >
+          {/* Bug Title */}
+          <div>
+            <label className="block mb-1 text-[#9fb6af]">
+              Bug Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              {...registerBug("title")}
+              placeholder="e.g., App crashes on logout"
+              className="w-full rounded-lg bg-[#020907] border border-[#1f2a27] px-4 py-2 text-[#e6f4f1] placeholder:text-[#6b7f79] focus:outline-none focus:ring-2 focus:ring-[#27e0a6]"
+            />
+            {errorsCreate.title && (
+              <p className="mt-1 text-xs text-red-500">
+                {errorsCreate.title.message}
+              </p>
+            )}
+          </div>
+
+          {/* Severity + Category */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1 text-[#9fb6af]">Severity</label>
+              <select
+                {...registerBug("priority")}
+                className="w-full rounded-lg bg-[#020907] border border-[#1f2a27] px-3 py-2 text-[#e6f4f1] focus:outline-none focus:ring-2 focus:ring-[#27e0a6]"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-1 text-[#9fb6af]">Status</label>
+              <select
+                {...registerBug("status")}
+                className="w-full rounded-lg bg-[#020907] border border-[#1f2a27] px-3 py-2 text-[#e6f4f1] focus:outline-none focus:ring-2 focus:ring-[#27e0a6]"
+              >
+                <option value="open">Open</option>
+                <option value="in-progress">In-Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block mb-1 text-[#9fb6af]">Description</label>
+            <textarea
+              {...registerBug("description")}
+              rows={4}
+              placeholder="Describe the bug and steps to reproduce..."
+              className="w-full rounded-lg bg-[#020907] border border-[#1f2a27] px-4 py-2 text-[#e6f4f1] placeholder:text-[#6b7f79] focus:outline-none focus:ring-2 focus:ring-[#27e0a6] resize-none"
+            />
+            {errorsCreate.description && (
+              <p className="mt-1 text-xs text-red-500">
+                {errorsCreate.description.message}
+              </p>
+            )}
+          </div>
+
+          {/* Assign To */}
+          <div>
+            <label className="block mb-1 text-[#9fb6af]">Assign to</label>
+            <div className="flex gap-2">
+              <select
+                {...registerBug("assignedTo")}
+                className="flex-1 rounded-lg bg-[#020907] border border-[#1f2a27] px-3 py-2 text-[#e6f4f1] focus:outline-none focus:ring-2 focus:ring-[#27e0a6]"
+              >
+                <option value="UNASSIGNED">Select a team member</option>
+                <option value="me">Me</option>
+                <option value="dev1">Developer 1</option>
+                <option value="dev2">Developer 2</option>
+              </select>
+
+              <button
+                type="button"
+                className="rounded-lg bg-[#10221d] border border-[#1f2a27] px-3 text-[#9fb6af] hover:text-white"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <label className="block mb-2 text-[#9fb6af]">Attachments</label>
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#1f2a27] bg-[#020907] py-6 text-center">
+              <div className="text-[#27e0a6] mb-1">⬆️</div>
+              <p className="text-[#27e0a6]">Click to upload</p>
+              <p className="text-xs text-[#6b7f79]">PNG, JPG, PDF up to 10MB</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setCreateModalOpen(false);
+                resetCreate();
+              }}
+              className="text-[#9fb6af] hover:text-white"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmittingCreate}
+              className="rounded-lg bg-[#27e0a6] px-5 py-2 font-medium cursor-pointer text-black hover:bg-[#1fcf98] disabled:opacity-50"
+            >
+              {isSubmittingCreate ? "Creating..." : "Create Issue"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
-
