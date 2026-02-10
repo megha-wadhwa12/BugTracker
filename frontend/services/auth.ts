@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_LOCAL_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export const loginAPI = async (data: any) => {
     const response = await axios.post(`${API_URL}/auth/login`, data);
